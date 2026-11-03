@@ -476,8 +476,7 @@ apiRouter.get('/music/download', (req: Request, res: Response) => {
 });
 
 // Tube Tunes - Full Raycast Extension Package Source
-apiRouter.get('/raycast-files', (req: Request, res: Response) => {
-  res.json({
+export const raycastExtension = {
     name: "Music Player",
     files: {
       'package.json': JSON.stringify(
@@ -487,8 +486,8 @@ apiRouter.get('/raycast-files', (req: Request, res: Response) => {
           "title": "Music Player",
           "description": "Search, stream, download, and read lyrics for music from YouTube.",
           "icon": "extension-icon.png",
-          "author": "your-github-username",
-          "categories": ["Music", "Media"],
+          "author": "ziad_khaled",
+          "categories": ["Media"],
           "license": "MIT",
           "commands": [
             {
@@ -509,10 +508,10 @@ apiRouter.get('/raycast-files', (req: Request, res: Response) => {
             }
           ],
           "dependencies": {
+            "@raycast/api": "^1.90.0",
             "youtubei.js": "^13.0.0"
           },
           "devDependencies": {
-            "@raycast/api": "^1.90.0",
             "@raycast/eslint-config": "^1.0.8",
             "@types/react": "^18.3.0",
             "eslint": "^8.57.0",
@@ -877,7 +876,10 @@ export default function Command() {
       '.eslintrc.json': JSON.stringify(
         {
           "root": true,
-          "extends": ["@raycast"]
+          "extends": ["@raycast"],
+          "rules": {
+            "@typescript-eslint/no-explicit-any": "off"
+          }
         },
         null,
         2
@@ -918,5 +920,8 @@ npm run dev
 - Added system prerequisite detector for \`mpv\` and \`yt-dlp\`
 `
     }
-  });
+};
+
+apiRouter.get('/raycast-files', (_req: Request, res: Response) => {
+  res.json(raycastExtension);
 });
