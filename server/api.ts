@@ -8,7 +8,16 @@ import { Innertube, UniversalCache } from 'youtubei.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
-const ytdlpPath = path.join(projectRoot, 'bin', 'yt-dlp');
+function resolveYtdlpPath(): string {
+  const exe = process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp";
+  if (process.resourcesPath) {
+    const packaged = path.join(process.resourcesPath, "bin", exe);
+    if (fs.existsSync(packaged)) return packaged;
+  }
+  return path.join(projectRoot, "bin", exe);
+}
+
+const ytdlpPath = resolveYtdlpPath();
 let downloadsDir: string | null = null;
 
 function getDownloadsDir(): string {
