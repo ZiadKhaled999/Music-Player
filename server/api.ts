@@ -478,13 +478,13 @@ apiRouter.get('/music/download', (req: Request, res: Response) => {
 // Tube Tunes - Full Raycast Extension Package Source
 apiRouter.get('/raycast-files', (req: Request, res: Response) => {
   res.json({
-    name: "Tube Tunes",
+    name: "Music Player",
     files: {
       'package.json': JSON.stringify(
         {
           "$schema": "https://www.raycast.com/schemas/extension.json",
-          "name": "tube-tunes",
-          "title": "Tube Tunes",
+          "name": "music-player",
+          "title": "Music Player",
           "description": "Search, stream, download, and read lyrics for music from YouTube.",
           "icon": "extension-icon.png",
           "author": "your-github-username",
@@ -504,7 +504,7 @@ apiRouter.get('/raycast-files', (req: Request, res: Response) => {
               "type": "textfield",
               "required": false,
               "title": "Download Folder",
-              "default": "~/Music/TubeTunes",
+              "default": "~/Music/MusicPlayer",
               "description": "Where downloaded songs are saved"
             }
           ],
@@ -565,7 +565,7 @@ export async function checkDeps(): Promise<string[]> {
 
 export function getDownloadDir(): string {
   const { downloadPath } = getPreferenceValues<Preferences>();
-  const dir = (downloadPath || "~/Music/TubeTunes").replace("~", homedir());
+  const dir = (downloadPath || "~/Music/MusicPlayer").replace("~", homedir());
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
@@ -883,7 +883,7 @@ export default function Command() {
         2
       ),
 
-      'README.md': `# Tube Tunes
+      'README.md': `# Music Player
 
 Search, stream, download, and read lyrics for music from YouTube directly inside Raycast.
 
@@ -908,7 +908,7 @@ npm run dev
 - **Search Music**: Search YouTube Music, play, download songs, and view synced lyrics.
 `,
 
-      'CHANGELOG.md': `# Tube Tunes Changelog
+      'CHANGELOG.md': `# Music Player Changelog
 
 ## [Initial Version] - 2026-11-03
 - Added YouTube Music search via InnerTube protocol (\`youtubei.js\`)

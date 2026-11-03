@@ -64,6 +64,26 @@ npm run electron:build
 ```
 The output will be located in the `dist-electron` folder.
 
+## 🟠 Raycast Extension
+
+The project includes a fully built Raycast extension source (`Tube Tunes`).
+
+### How to apply to Raycast:
+1.  **Start the app**: Ensure the development server is running.
+    ```bash
+    npm run dev
+    ```
+2.  **Export the extension**: Run the export script to generate the extension folder.
+    ```bash
+    npm run raycast:export
+    ```
+3.  **Setup Raycast**:
+    - Install Raycast CLI: `npm install -g @raycast/api`
+    - Go to the exported folder: `cd music-player-raycast`
+    - Install dependencies: `npm install`
+    - Run locally: `npm run dev`
+4.  **Publish**: When ready, run `npm run publish` from the extension folder.
+
 ## 🤖 GitHub Actions (CI/CD)
 
 The project includes an automated workflow to build and release the Windows installer.
