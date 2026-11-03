@@ -69,6 +69,9 @@ function createWindow() {
 
 ipcMain.handle('search', (_e, query) => api.searchMusic(query));
 ipcMain.handle('stream-url', (_e, videoId) => api.getStreamUrl(videoId));
+ipcMain.handle('lyrics', (_e, videoId, title, artist) => api.getLyrics(videoId, title, artist));
+ipcMain.handle('download', (_e, videoId, title) => api.downloadSong(videoId, title));
+ipcMain.handle('system-check', () => api.checkSystem());
 
 // downloads dir lives in userData for packaged builds
 ipcMain.handle('downloads-dir', () => process.env.MUSIC_PLAYER_DATA_DIR || null);

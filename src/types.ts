@@ -69,6 +69,9 @@ declare global {
     api?: {
       search: (q: string) => Promise<any>;
       getStreamUrl: (id: string) => Promise<any>;
+      lyrics: (id: string, title: string, artist: string) => Promise<any>;
+      download: (id: string, title: string) => Promise<any>;
+      systemCheck: () => Promise<any>;
     };
   }
 }

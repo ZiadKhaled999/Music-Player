@@ -296,10 +296,11 @@ export default function App() {
     setLyricsData(null);
 
     try {
-      const res = await fetch(
-        `/api/music/lyrics?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist)}`
-      );
-      const data: LyricsResponse = await res.json();
+      const data: LyricsResponse = window.api?.lyrics
+        ? await window.api.lyrics(song.id, song.title, song.artist)
+        : await fetch(
+            `/api/music/lyrics?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist)}`
+          ).then((r) => r.json());
       if (data.success && (data.lines?.length > 0 || data.plainLyrics)) {
         setLyricsData(data);
       } else {
@@ -343,15 +344,24 @@ export default function App() {
     showNotification(`Downloading audio master for "${song.title}"…`, 'info');
 
     try {
-      const downloadUrl = `/api/music/download?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}`;
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `${song.title}.m4a`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (window.api?.download) {
+        const result = await window.api.download(song.id, song.title);
+        if (result?.success) {
+          showNotification(`Saved "${song.title}" to ${result.filePath}!`, 'success');
+        } else {
+          showNotification(result?.error || 'Download failed.', 'error');
+        }
+      } else {
+        const downloadUrl = `/api/music/download?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${song.title}.m4a`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-      showNotification(`Saved "${song.title}" (.m4a) to ${downloadPath}!`, 'success');
+        showNotification(`Saved "${song.title}" (.m4a) to ${downloadPath}!`, 'success');
+      }
     } catch {
       showNotification('Download failed. Please check network.', 'error');
     } finally {

@@ -27,8 +27,9 @@ export const Diagnostics: React.FC = () => {
   const fetchStatus = async () => {
     setLoadingStatus(true);
     try {
-      const res = await fetch('/api/system/check');
-      const data = await res.json();
+      const data = window.api?.systemCheck
+        ? await window.api.systemCheck()
+        : await fetch('/api/system/check').then((r) => r.json());
       setStatus(data);
     } catch (e) {
       console.error(e);

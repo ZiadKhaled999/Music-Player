@@ -197,3 +197,205 @@ function getStreamUrl(videoId) {
 }
 
 module.exports = { searchMusic, getStreamUrl, ytdlpPath };
+
+async function getLyrics(videoId, rawTitle, rawArtist) {
+  videoId = (videoId || '').trim();
+  rawTitle = (rawTitle || '').trim();
+  rawArtist = (rawArtist || '').trim();
+
+  if (!videoId) {
+    return { success: false, error: 'Missing video id parameter' };
+  }
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    return { success: false, error: 'Invalid YouTube video ID format' };
+  }
+
+  const cleanTitle = rawTitle
+    .replace(/\s*(\(|\[)(official\s*(video|audio|music\s*video|lyric\s*video|visualizer|remaster|hd|4k)?).*?(\)|\])/gi, '')
+    .replace(/\s*-\s*official\s*(video|audio|music\s*video)/gi, '')
+    .replace(/\s*feat\.?.*$/i, '')
+    .trim() || rawTitle;
+
+  const cleanArtist = rawArtist.split(',')[0].replace(/\s*feat\.?.*$/i, '').trim();
+
+  // Strategy 1: LRCLIB
+  try {
+    const lrcSearchQuery = `${cleanArtist} ${cleanTitle}`.trim();
+    const lrcRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(lrcSearchQuery)}`, {
+      headers: { 'User-Agent': 'TubeTunes/1.0 (https://tubetunes.app)' },
+    });
+    if (lrcRes.ok) {
+      const items = await lrcRes.json();
+      const match = Array.isArray(items) ? items.find((i) => i.syncedLyrics && String(i.syncedLyrics).trim().length > 0) : null;
+      if (match && match.syncedLyrics) {
+        const syncedLines = [];
+        const regex = /\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\](.*)/;
+        for (const line of match.syncedLyrics.split('\n')) {
+          const m = line.match(regex);
+          if (m) {
+            const min = parseInt(m[1], 10);
+            const sec = parseInt(m[2], 10);
+            const msRaw = m[3] || '';
+            let ms = 0;
+            if (msRaw.length === 1) ms = parseInt(msRaw, 10) / 10;
+            else if (msRaw.length === 2) ms = parseInt(msRaw, 10) / 100;
+            else if (msRaw.length === 3) ms = parseInt(msRaw, 10) / 1000;
+            const time = Math.round((min * 60 + sec + ms) * 1000) / 1000;
+            const text = m[4].trim();
+            if (text) syncedLines.push({ time, text });
+          }
+        }
+        if (syncedLines.length > 0) {
+          return {
+            success: true,
+            videoId,
+            title: rawTitle,
+            artist: rawArtist,
+            isSynced: true,
+            lines: syncedLines,
+            plainLyrics: match.plainLyrics || syncedLines.map((l) => l.text).join('\n'),
+            source: 'LRCLIB Synced',
+          };
+        }
+      }
+    }
+  } catch (lrcErr) {
+    console.warn('LRCLIB synced lyrics lookup skipped:', lrcErr);
+  }
+
+  // Strategy 2: InnerTube
+  try {
+    const yt = await getInnertube();
+    const info = await yt.music.getInfo(videoId);
+    let lyricsText = null;
+
+    if (typeof info?.getLyrics === 'function') {
+      try {
+        const lyricsObj = await info.getLyrics();
+        lyricsText = lyricsObj?.description?.text || lyricsObj?.content || lyricsObj?.text || null;
+      } catch {}
+    }
+
+    if (!lyricsText && info?.tabs) {
+      const lyricsTab = info.tabs.find((t) => t.title === 'Lyrics' || t.endpoint?.payload?.browseId);
+      const browseId = lyricsTab?.endpoint?.payload?.browseId || info?.lyrics?.id || info?.lyrics;
+      if (browseId && typeof yt.music?.getLyrics === 'function') {
+        try {
+          const lyricsObj = await yt.music.getLyrics(browseId);
+          lyricsText = lyricsObj?.description?.text || lyricsObj?.content || null;
+        } catch (err) {
+          console.warn('yt.music.getLyrics(browseId) failed', err);
+        }
+      }
+    }
+
+    if (lyricsText) {
+      const plainLines = lyricsText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+      return {
+        success: true,
+        videoId,
+        title: rawTitle,
+        artist: rawArtist,
+        isSynced: false,
+        lines: plainLines.map((text, i) => ({ time: i * 4, text })),
+        plainLyrics: lyricsText,
+        source: 'YouTube Music InnerTube',
+      };
+    }
+  } catch (ytErr) {
+    console.warn('InnerTube lyrics lookup failed:', ytErr);
+  }
+
+  return {
+    success: false,
+    videoId,
+    title: rawTitle,
+    isSynced: false,
+    lines: [],
+    plainLyrics: '',
+    message: `No synced lyrics found for "${rawTitle}".`,
+  };
+}
+
+// getDownloadsDir + download
+let downloadsDir = null;
+function getDownloadsDir() {
+  if (!downloadsDir) {
+    const base = process.env.MUSIC_PLAYER_DATA_DIR || projectRoot;
+    downloadsDir = path.join(base, 'downloads');
+    if (!fs.existsSync(downloadsDir)) {
+      fs.mkdirSync(downloadsDir, { recursive: true });
+    }
+  }
+  return downloadsDir;
+}
+
+function downloadSong(videoId, rawTitle) {
+  videoId = (videoId || '').trim();
+  rawTitle = (rawTitle || 'track').trim();
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    return Promise.resolve({ success: false, error: 'Invalid video ID' });
+  }
+  const safeFilename = rawTitle.replace(/[^a-zA-Z0-9_ -]/g, '').trim() || videoId;
+  const outputPath = path.join(getDownloadsDir(), `${safeFilename}-${videoId}.%(ext)s`);
+  const args = [
+    '-f',
+    'bestaudio[ext=m4a]/bestaudio',
+    '--add-metadata',
+    '-o',
+    outputPath,
+    `https://www.youtube.com/watch?v=${videoId}`,
+  ];
+  return new Promise((resolve) => {
+    execFile(ytdlpPath, args, { timeout: 120000 }, (err) => {
+      if (err) {
+        console.error('yt-dlp download failed:', err);
+        return resolve({ success: false, error: err.message });
+      }
+      const matchedFile = fs.readdirSync(getDownloadsDir()).find((f) => f.includes(videoId));
+      if (!matchedFile) {
+        return resolve({ success: false, error: 'Downloaded file not found on disk' });
+      }
+      const fullFilePath = path.join(getDownloadsDir(), matchedFile);
+      return resolve({ success: true, filePath: fullFilePath, filename: matchedFile });
+    });
+  });
+}
+
+function checkSystem() {
+  const status = {
+    ytdlp: { installed: false, version: null, path: ytdlpPath },
+    mpv: { installed: false, version: null },
+    youtubei: { initialized: false, latencyMs: 0 },
+    system: { platform: process.platform, arch: process.arch },
+  };
+  const exec = (cmd, args) => new Promise((resolve, reject) => {
+    execFile(cmd, args, { timeout: 4000 }, (err, stdout) => {
+      if (err) reject(err); else resolve(stdout);
+    });
+  });
+  (async () => {})();
+  return (async () => {
+    try {
+      if (fs.existsSync(ytdlpPath)) {
+        const v = await exec(ytdlpPath, ['--version']);
+        status.ytdlp.installed = true;
+        status.ytdlp.version = v.trim();
+      }
+    } catch (err) { status.ytdlp.error = err.message; }
+    try {
+      const v = await exec('mpv', ['--version']);
+      status.mpv.installed = true;
+      status.mpv.version = v.trim().split('\n')[0];
+    } catch (err) { status.mpv.installed = false; status.mpv.note = 'Optional: install mpv for local playback.'; }
+    const t0 = Date.now();
+    try {
+      const yt = await getInnertube();
+      status.youtubei.initialized = !!yt;
+      status.youtubei.latencyMs = Date.now() - t0;
+    } catch (err) { status.youtubei.error = err.message; }
+    return status;
+  })();
+}
+
+module.exports = { searchMusic, getStreamUrl, getLyrics, downloadSong, checkSystem, ytdlpPath, getDownloadsDir };
