@@ -24,7 +24,8 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "public/**/*"
+      "public/**/*",
+      "server/**/*"
     ],
     "mac": {
       "target": [

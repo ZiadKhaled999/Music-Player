@@ -61,8 +61,9 @@ export const YouTubeMusicView: React.FC<YouTubeMusicViewProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/music/search?q=${encodeURIComponent(term)}`);
-      const data = await res.json();
+      const data = window.api?.search
+        ? await window.api.search(term)
+        : await fetch(`/api/music/search?q=${encodeURIComponent(term)}`).then((r) => r.json());
       if (data.results) {
         setResults(data.results);
       }

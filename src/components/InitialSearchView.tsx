@@ -144,8 +144,9 @@ export const InitialSearchView: React.FC<InitialSearchViewProps> = ({
     setResults([]);
 
     try {
-      const res = await fetch(`/api/music/search?q=${encodeURIComponent(term)}`);
-      const data = await res.json();
+      const data = window.api?.search
+        ? await window.api.search(term)
+        : await fetch(`/api/music/search?q=${encodeURIComponent(term)}`).then((r) => r.json());
       if (data.results && Array.isArray(data.results)) {
         setResults(data.results);
       }
@@ -171,7 +172,7 @@ export const InitialSearchView: React.FC<InitialSearchViewProps> = ({
           <div className="w-full flex items-center justify-between gap-3 pt-2 flex-wrap">
             <div className="flex items-center gap-3">
               <img
-                src="/assets/logo.png"
+                src="./assets/logo.png"
                 alt="Music Player"
                 className="w-9 h-9 rounded-xl object-contain bg-white/5 p-1 border border-white/10 shadow-md"
               />
@@ -327,7 +328,7 @@ export const InitialSearchView: React.FC<InitialSearchViewProps> = ({
 
               {/* Logo Branding */}
               <img
-                src="/assets/logo.png"
+                src="./assets/logo.png"
                 alt="Music Player"
                 onClick={handleBackToInitial}
                 className="w-9 h-9 rounded-xl object-contain bg-white/5 p-1 border border-white/10 shrink-0 cursor-pointer hover:border-white/30 transition-all"

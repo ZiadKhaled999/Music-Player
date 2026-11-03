@@ -121,7 +121,7 @@ export const LocalMusicView: React.FC<LocalMusicViewProps> = ({
             <ArrowLeft className="w-5 h-5" />
           </button>
           <img
-            src="/assets/logo.png"
+            src="./assets/logo.png"
             alt="Music Player"
             className="w-9 h-9 rounded-xl object-contain bg-white/5 p-1 border border-white/10 shrink-0"
           />

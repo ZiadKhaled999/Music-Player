@@ -1,5 +1,6 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
+const api = require('../server/api.cjs');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -40,6 +41,9 @@ function createWindow() {
     return { action: 'deny' };
   });
 }
+
+ipcMain.handle('search', (_e, query) => api.searchMusic(query));
+ipcMain.handle('stream-url', (_e, videoId) => api.getStreamUrl(videoId));
 
 app.whenReady().then(() => {
   createWindow();

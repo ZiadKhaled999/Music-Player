@@ -53,8 +53,9 @@ export const Diagnostics: React.FC = () => {
     setExtractedResult(null);
 
     try {
-      const res = await fetch(`/api/music/stream?id=${encodeURIComponent(cleanId)}`);
-      const data = await res.json();
+      const data = window.api?.getStreamUrl
+        ? await window.api.getStreamUrl(cleanId)
+        : await fetch(`/api/music/stream?id=${encodeURIComponent(cleanId)}`).then((r) => r.json());
       setExtractedResult(data);
     } catch (err: any) {
       setExtractedResult({

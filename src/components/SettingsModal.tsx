@@ -54,7 +54,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="flex items-center justify-between pb-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <img
-              src="/assets/logo.png"
+              src="./assets/logo.png"
               alt="Music Player Logo"
               className="w-10 h-10 rounded-2xl bg-white/5 p-1 border border-white/10 object-contain shadow-md"
             />

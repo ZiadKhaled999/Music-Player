@@ -97,8 +97,9 @@ export const RaycastWindow: React.FC<RaycastWindowProps> = ({
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/music/search?q=${encodeURIComponent(query)}&type=song`);
-        const data = await res.json();
+        const data = window.api?.search
+          ? await window.api.search(query)
+          : await fetch(`/api/music/search?q=${encodeURIComponent(query)}&type=song`).then((r) => r.json());
         if (data.results) {
           setResults(data.results);
           setSelectedIndex(0);

@@ -237,7 +237,7 @@ export const StudioPlayer: React.FC<StudioPlayerProps> = ({
           >
             <ChevronLeft className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
             <img
-              src="/assets/logo.png"
+              src="./assets/logo.png"
               alt="Music Player Logo"
               className="w-7 h-7 rounded-lg object-contain bg-white/5 p-0.5 border border-white/10 shrink-0"
             />

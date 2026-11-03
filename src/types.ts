@@ -63,3 +63,12 @@ export interface SystemStatus {
     arch: string;
   };
 }
+
+declare global {
+  interface Window {
+    api?: {
+      search: (q: string) => Promise<any>;
+      getStreamUrl: (id: string) => Promise<any>;
+    };
+  }
+}

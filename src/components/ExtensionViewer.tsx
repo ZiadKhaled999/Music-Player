@@ -66,7 +66,7 @@ downloads/
 
       // Fetch and attach 512x512 extension icon into assets/
       try {
-        const iconRes = await fetch('/assets/extension-icon.png');
+        const iconRes = await fetch('./assets/extension-icon.png');
         if (iconRes.ok) {
           const iconBlob = await iconRes.blob();
           zip.file('assets/extension-icon.png', iconBlob);
@@ -99,7 +99,7 @@ downloads/
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-xl bg-[#14171e] border border-[#232833] flex items-center gap-3">
           <img
-            src="/assets/extension-icon.png"
+            src="./assets/extension-icon.png"
             alt="Tube Tunes"
             className="w-10 h-10 rounded-lg object-cover border border-[#2b303d] shadow-md shrink-0"
             onError={(e) => {
