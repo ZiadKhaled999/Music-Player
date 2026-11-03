@@ -87,7 +87,7 @@ export const TrackOverviewModal: React.FC<TrackOverviewModalProps> = ({
 
             <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
               <span className="text-white/40 block">Release Year</span>
-              <span className="text-white font-medium">{song.year || '2026'}</span>
+              <span className="text-white font-medium">{song.year || 'N/A'}</span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">

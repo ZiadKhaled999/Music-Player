@@ -337,7 +337,7 @@ export const StudioPlayer: React.FC<StudioPlayerProps> = ({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-white/40">Release Year:</span>
-                        <span className="text-white/90 font-medium">{song.year || '2026'}</span>
+                        <span className="text-white/90 font-medium">{song.year || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-white/40">Source:</span>

@@ -421,8 +421,8 @@ export const InitialSearchView: React.FC<InitialSearchViewProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 lg:gap-6">
                 {results.map((song) => {
                   const isCurrentActive = currentSong?.id === song.id;
-                  const yearText = song.year || (song.album && !song.album.toLowerCase().includes('unknown') ? song.album : 'Single');
-                  const subtitle = `${song.artist} · ${yearText}`;
+                  const yearText = song.year || (song.album && !song.album.toLowerCase().includes('unknown') ? song.album : 'Song');
+                  const subtitle = song.year ? `${song.artist} · ${song.year}` : `${song.artist} · ${song.album || 'Single'}`;
                   const highResCover = getHighResThumbnail(song.thumbnail, song.id);
 
                   return (

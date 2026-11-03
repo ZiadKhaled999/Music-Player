@@ -160,10 +160,26 @@ apiRouter.get('/music/search', async (req: Request, res: Response) => {
           let year = '';
           if (item.year) {
             year = typeof item.year === 'string' ? item.year : String(item.year?.text || item.year);
-          } else if (item.subtitle) {
+          } else if (item.subtitle && item.subtitle.runs) {
+            // If we have runs, the year is typically the last run if it's a 4-digit number
+            const runs = item.subtitle.runs;
+            for (let i = runs.length - 1; i >= 0; i--) {
+              const text = runs[i].text || '';
+              if (/^\d{4}$/.test(text.trim())) {
+                year = text.trim();
+                break;
+              }
+            }
+          }
+
+          if (!year && item.subtitle) {
             const subText = typeof item.subtitle === 'string' ? item.subtitle : item.subtitle?.text || '';
+            // Match 4-digit years but avoid things that look like view counts or durations
             const yearMatch = subText.match(/\b(19\d\d|20\d\d)\b/);
-            if (yearMatch) year = yearMatch[1];
+            if (yearMatch) {
+              // Simple heuristic: if the matched year is surrounded by dots or is at the end, it's more likely a year
+              year = yearMatch[1];
+            }
           }
 
           parsedItems.push({
