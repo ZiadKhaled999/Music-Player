@@ -13,7 +13,8 @@
     "lint": "tsc --noEmit",
     "electron:dev": "concurrently --kill-others \"npm run dev\" \"electron .\"",
     "electron:build": "npm run build && electron-builder",
-    "raycast:export": "tsx scripts/export-raycast.ts"
+    "raycast:export": "tsx scripts/export-raycast.ts",
+    "preelectron:build": "node -e \"if(!require('fs').existsSync('bin/yt-dlp')&&!require('fs').existsSync('bin/yt-dlp.exe')){console.error('bin/yt-dlp missing \u2014 download it first');process.exit(1)}\""
   },
   "build": {
     "appId": "com.musicplayer.app",
