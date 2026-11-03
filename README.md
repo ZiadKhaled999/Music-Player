@@ -64,6 +64,11 @@ npm run electron:build
 ```
 The output will be located in the `dist-electron` folder.
 
+## 🛡️ Windows Notes
+
+- The installer bundles `yt-dlp.exe` downloaded from the official yt-dlp GitHub releases. Some antivirus engines may flag it as PUA; if it is quarantined, install yt-dlp manually and ensure it is on your `PATH`.
+- yt-dlp is updated frequently; rebuild/reinstall the app to pick up a newer binary when YouTube changes break extraction.
+
 ## 🟠 Raycast Extension
 
 The project includes a fully built Raycast extension source (`Tube Tunes`).
