@@ -1,4 +1,4 @@
-name: Build Desktop Installers (.exe & .dmg)
+name: Build Windows Installer (.exe)
 
 on:
   push:
@@ -10,12 +10,9 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build ${{ matrix.os }} Desktop App
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest]
+  build-windows:
+    name: Build Windows .exe
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
@@ -28,14 +25,43 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
+        id: install
         run: npm ci
+        continue-on-error: false
+
+      - name: Handle Install Failure
+        if: failure() && steps.install.outcome == 'failure'
+        run: echo "::error::Dependency installation failed. Check package-lock.json consistency."
 
       - name: Build Web Application
+        id: build_web
         run: npm run build
+        continue-on-error: false
 
-      - name: Build & Package Desktop App with Electron Builder
+      - name: Handle Build Failure
+        if: failure() && steps.build_web.outcome == 'failure'
+        run: echo "::error::Vite build failed. Check for typescript or linting errors."
+
+      - name: Build & Package Windows App
+        id: package
         uses: samuelmeuli/action-electron-builder@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          args: ${{ matrix.os == 'windows-latest' && '--win' || '--mac' }}
+          args: --win nsis --x64
+        continue-on-error: false
+
+      - name: Verify Build Artifacts
+        if: success()
+        shell: bash
+        run: |
+          if [ ! -d "dist-electron" ]; then
+            echo "::error::Build directory dist-electron not found!"
+            exit 1
+          fi
+          echo "Build successful. Checking for .exe files..."
+          ls -R dist-electron/*.exe || echo "No .exe found in dist-electron root, checking subdirectories..."
+
+      - name: Handle Packaging Failure
+        if: failure() && steps.package.outcome == 'failure'
+        run: echo "::error::Electron packaging failed. Check electron-builder configuration in package.json."
