@@ -24,43 +24,25 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
-        id: install
         run: npm install
-        continue-on-error: false
 
-      - name: Handle Install Failure
-        if: failure() && steps.install.outcome == 'failure'
-        run: echo "::error::Dependency installation failed. Check package-lock.json consistency."
-
-      - name: Build Web Application
-        id: build_web
+      - name: Build web application
         run: npm run build
-        continue-on-error: false
 
-      - name: Handle Build Failure
-        if: failure() && steps.build_web.outcome == 'failure'
-        run: echo "::error::Vite build failed. Check for typescript or linting errors."
+      - name: Package Windows installer (release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: npx electron-builder --win nsis --x64 --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Package Windows App
-        id: package
-        uses: samuelmeuli/action-electron-builder@v1
+      - name: Package Windows installer (manual run)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: npx electron-builder --win nsis --x64 --publish never
+
+      - name: Upload .exe artifact
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          args: --win nsis --x64
-        continue-on-error: false
-
-      - name: Verify Build Artifacts
-        if: success()
-        shell: bash
-        run: |
-          if [ ! -d "dist-electron" ]; then
-            echo "::error::Build directory dist-electron not found!"
-            exit 1
-          fi
-          echo "Build successful. Checking for .exe files..."
-          ls -R dist-electron/*.exe || echo "No .exe found in dist-electron root, checking subdirectories..."
-
-      - name: Handle Packaging Failure
-        if: failure() && steps.package.outcome == 'failure'
-        run: echo "::error::Electron packaging failed. Check electron-builder configuration in package.json."
+          name: music-player-windows
+          path: dist-electron/*.exe
+          if-no-files-found: error
