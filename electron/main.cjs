@@ -28,6 +28,10 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  if (process.env.ELECTRON_DEVTOOLS === '1') {
+    mainWindow.webContents.openDevTools();
+  }
+
   // Open external links in default OS browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http:') || url.startsWith('https:')) {
