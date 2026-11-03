@@ -351,26 +351,30 @@ apiRouter.get('/music/lyrics', async (req: Request, res: Response) => {
 
     if (lrcRes.ok) {
       const items: any[] = await lrcRes.json();
-      const match = items.find((i) => i.syncedLyrics && i.syncedLyrics.length > 30);
-      
-      if (match && match.syncedLyrics) {
-        const syncedLines: { time: number; text: string }[] = [];
-        const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+const match = items.find((i) => i.syncedLyrics && String(i.syncedLyrics).trim().length > 0);
 
-        for (const line of match.syncedLyrics.split('\n')) {
-          const m = line.match(regex);
-          if (m) {
-            const min = parseInt(m[1], 10);
-            const sec = parseInt(m[2], 10);
-            const ms = parseFloat('0.' + m[3]);
-            const time = Math.round((min * 60 + sec + ms) * 100) / 100;
-            const text = m[4].trim();
-            if (text) {
-              syncedLines.push({ time, text });
+        
+        if (match && match.syncedLyrics) {
+          const syncedLines: { time: number; text: string }[] = [];
+          const regex = /\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\](.*)/;
+
+          for (const line of match.syncedLyrics.split('\n')) {
+            const m = line.match(regex);
+            if (m) {
+              const min = parseInt(m[1], 10);
+              const sec = parseInt(m[2], 10);
+              const msRaw = m[3] || '';
+              let ms = 0;
+              if (msRaw.length === 1) ms = parseInt(msRaw, 10) / 10;
+              else if (msRaw.length === 2) ms = parseInt(msRaw, 10) / 100;
+              else if (msRaw.length === 3) ms = parseInt(msRaw, 10) / 1000;
+              const time = Math.round((min * 60 + sec + ms) * 1000) / 1000;
+              const text = m[4].trim();
+              if (text) {
+                syncedLines.push({ time, text });
+              }
             }
           }
-        }
-
         if (syncedLines.length > 0) {
           return res.json({
             success: true,

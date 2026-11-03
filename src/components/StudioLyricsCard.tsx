@@ -49,7 +49,8 @@ export const StudioLyricsCard: React.FC<StudioLyricsCardProps> = ({
         time: typeof l.time === 'number' && !isNaN(l.time) ? l.time : 0,
         text: String(l.text || '').trim(),
       }))
-      .filter((l) => l.text.length > 0);
+      .filter((l) => l.text.length > 0)
+      .sort((a, b) => a.time - b.time);
   }, [lyricsData]);
 
   const isSynced = Boolean(lyricsData?.isSynced && lines.length > 0);
