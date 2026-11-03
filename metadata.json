@@ -1,0 +1,6 @@
+{
+  "name": "Music Player",
+  "description": "Clean, dark-mode minimalist Music Player app with synchronized lyrics, local library playback, custom playlists, and high-fidelity audio controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
