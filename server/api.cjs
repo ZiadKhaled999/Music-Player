@@ -7,11 +7,11 @@ const projectRoot = path.resolve(__dirname, '..');
 
 function resolveYtdlpPath() {
   const exe = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
-  if (process.resourcesPath) {
-    const packaged = path.join(process.resourcesPath, 'bin', exe);
-    if (fs.existsSync(packaged)) return packaged;
-  }
-  return path.join(projectRoot, 'bin', exe);
+  const candidates = [
+    process.resourcesPath ? path.join(process.resourcesPath, 'bin', exe) : null,
+    path.join(projectRoot, 'bin', exe),
+  ].filter(Boolean);
+  return candidates.find((p) => fs.existsSync(p)) || 'yt-dlp';
 }
 
 const ytdlpPath = resolveYtdlpPath();
@@ -187,7 +187,7 @@ function getStreamUrl(videoId) {
       return resolve({
         success: true,
         url: streamUrl,
-        proxyUrl: `/api/music/proxy?url=${encodeURIComponent(streamUrl)}`,
+        proxyUrl: process.resourcesPath ? streamUrl : `/api/music/proxy?url=${encodeURIComponent(streamUrl)}`,
         videoId,
         durationMs,
         command: 'yt-dlp -f bestaudio -g https://www.youtube.com/watch?v=' + videoId,
@@ -223,6 +223,7 @@ async function getLyrics(videoId, rawTitle, rawArtist) {
     const lrcSearchQuery = `${cleanArtist} ${cleanTitle}`.trim();
     const lrcRes = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(lrcSearchQuery)}`, {
       headers: { 'User-Agent': 'TubeTunes/1.0 (https://tubetunes.app)' },
+      signal: AbortSignal.timeout(8000),
     });
     if (lrcRes.ok) {
       const items = await lrcRes.json();
@@ -336,7 +337,7 @@ function downloadSong(videoId, rawTitle) {
   if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
     return Promise.resolve({ success: false, error: 'Invalid video ID' });
   }
-  const safeFilename = rawTitle.replace(/[^a-zA-Z0-9_ -]/g, '').trim() || videoId;
+  const safeFilename = (rawTitle.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '').trim().slice(0, 120)) || videoId;
   const outputPath = path.join(getDownloadsDir(), `${safeFilename}-${videoId}.%(ext)s`);
   const args = [
     '-f',

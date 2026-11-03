@@ -158,7 +158,7 @@ apiRouter.get('/music/proxy', async (req: Request, res: Response) => {
       headers['Range'] = req.headers.range;
     }
 
-    const response = await fetch(targetUrl, { headers });
+    const response = await fetch(targetUrl, { headers, signal: AbortSignal.timeout(30000) });
     
     res.status(response.status);
     response.headers.forEach((val, key) => {
@@ -330,7 +330,7 @@ apiRouter.get('/music/download', (req: Request, res: Response) => {
     return res.status(400).send('Invalid video ID');
   }
 
-  const safeFilename = rawTitle.replace(/[^a-zA-Z0-9_ -]/g, '').trim() || videoId;
+  const safeFilename = rawTitle.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '').trim().slice(0, 120) || videoId;
   const outputPath = path.join(getDownloadsDir(), `${safeFilename}-${videoId}.%(ext)s`);
 
   const args = [
