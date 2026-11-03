@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 const api = require('../server/api.cjs');
 

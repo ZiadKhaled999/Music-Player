@@ -131,10 +131,11 @@ export const RaycastWindow: React.FC<RaycastWindowProps> = ({
     setShowActionPanel(false);
 
     try {
-      const res = await fetch(`/api/music/lyrics?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}`);
-      const data = await res.json();
-      if (data.success && data.lyrics) {
-        setLyricsContent(data.lyrics);
+      const data = window.api?.lyrics
+        ? await window.api.lyrics(song.id, song.title, '')
+        : await fetch(`/api/music/lyrics?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}`).then((r) => r.json());
+      if (data.success && (data.lyrics || data.plainLyrics)) {
+        setLyricsContent(data.lyrics || data.plainLyrics);
       } else {
         setLyricsNotFound(true);
       }
@@ -152,16 +153,24 @@ export const RaycastWindow: React.FC<RaycastWindowProps> = ({
     showToast(`Downloading "${song.title}"…`, 'animated');
 
     try {
-      // Trigger download from server
-      const downloadUrl = `/api/music/download?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}`;
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `${song.title}.m4a`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (window.api?.download) {
+        const result = await window.api.download(song.id, song.title);
+        if (result?.success) {
+          showToast(`Saved "${song.title}" to ${result.filePath}`, 'success');
+        } else {
+          showToast(result?.error || 'Download failed', 'failure');
+        }
+      } else {
+        const downloadUrl = `/api/music/download?id=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${song.title}.m4a`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
-      showToast(`Saved "${song.title}" to your music folder`, 'success');
+        showToast(`Saved "${song.title}" to your music folder`, 'success');
+      }
     } catch (err: any) {
       showToast('Download failed. Check yt-dlp: brew upgrade yt-dlp', 'failure');
     } finally {
