@@ -113,7 +113,9 @@ export const AudioEngine: React.FC<AudioEngineProps> = ({
             modestbranding: 1,
             playsinline: 1,
             rel: 0,
-            origin: window.location.origin,
+            ...(window.location.protocol.startsWith('http')
+              ? { origin: window.location.origin }
+              : {}),
           },
           events: {
             onReady: (event: any) => {

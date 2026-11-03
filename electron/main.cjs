@@ -1,6 +1,20 @@
-const { app, BrowserWindow, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
 const path = require('path');
 const api = require('../server/api.cjs');
+
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  const wins = BrowserWindow.getAllWindows();
+  if (wins.length) {
+    const w = wins[0];
+    if (w.isMinimized()) w.restore();
+    w.focus();
+  }
+});
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -17,23 +31,34 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,
+      backgroundThrottling: false,
     },
   });
 
-  // Load Vite Dev Server in development or production HTML dist in build
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:3000');
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
-  }
+  let attempts = 0;
+  const loadWithRetry = () => {
+    if (isDev) {
+      mainWindow.loadURL('http://localhost:3000').catch(() => {});
+    } else {
+      mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    }
+  };
+
+  mainWindow.webContents.on('did-fail-load', () => {
+    if (isDev && attempts < 20) {
+      attempts += 1;
+      setTimeout(loadWithRetry, 500);
+    }
+  });
+
+  loadWithRetry();
 
   if (process.env.ELECTRON_DEVTOOLS === '1') {
     mainWindow.webContents.openDevTools();
   }
 
-  // Open external links in default OS browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('http:') || url.startsWith('https:')) {
       shell.openExternal(url);
@@ -45,7 +70,15 @@ function createWindow() {
 ipcMain.handle('search', (_e, query) => api.searchMusic(query));
 ipcMain.handle('stream-url', (_e, videoId) => api.getStreamUrl(videoId));
 
+// downloads dir lives in userData for packaged builds
+ipcMain.handle('downloads-dir', () => process.env.MUSIC_PLAYER_DATA_DIR || null);
+
 app.whenReady().then(() => {
+  try {
+    process.env.MUSIC_PLAYER_DATA_DIR = app.getPath('userData');
+  } catch (e) {}
+  app.setAppUserModelId('com.musicplayer.app');
+
   createWindow();
 
   app.on('activate', () => {

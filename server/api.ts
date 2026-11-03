@@ -89,7 +89,7 @@ apiRouter.get('/system/check', async (req: Request, res: Response) => {
     status.mpv.version = mpvVer;
   } catch (err: any) {
     status.mpv.installed = false;
-    status.mpv.note = 'Local Raycast extension requires `brew install mpv` on user macOS/Linux system.';
+    status.mpv.note = 'Optional: install mpv for local playback.';
   }
 
   // Check youtubei.js
@@ -138,6 +138,15 @@ apiRouter.get('/music/stream', async (req: Request, res: Response) => {
 apiRouter.get('/music/proxy', async (req: Request, res: Response) => {
   const targetUrl = req.query.url as string;
   if (!targetUrl || !targetUrl.startsWith('http')) {
+    return res.status(400).send('Invalid audio URL');
+  }
+  try {
+    const u = new URL(targetUrl);
+    const ok = /(^|\.)googlevideo\.com$/i.test(u.hostname) || /(^|\.)googleusercontent\.com$/i.test(u.hostname) || /(^|\.)ggpht\.com$/i.test(u.hostname) || /ytimg\.com$/i.test(u.hostname);
+    if (!ok) {
+      return res.status(400).send('Disallowed proxy target');
+    }
+  } catch {
     return res.status(400).send('Invalid audio URL');
   }
 
